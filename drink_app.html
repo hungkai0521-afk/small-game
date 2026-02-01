@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA / iOS App 專用設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="誰買飲料">
+    
+    <!-- 內網環境 PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJpZCI6ICIvIiwKICAic2NvcGUiOiAiLi8iLAogICJzdGFyd_VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgIm5hbWUiOiAi6Kqw6KaB6LK36aOy5paZ77yM5ZG96YGL5ouJ6Zy4IiwKICAic2hvcnRfbmFtZSI6ICLogq3mmpQiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjFmNWY5Igp9">
+    
+    <!-- App 圖示 (SVG 轉 Data URI) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0iIzI1NjNlYiIvPjxwYXRoIGQ9Ik0zNTIgMTI4SDI1NnYyNTZoOTZjMTEuMDQ2IDAgMjAtOC45NTQgMjAtMjBWMTQ4YzAtMTEuMDQ2LTguOTU0LTIwLTIwLTIwek0xNjAgMTI4YzExLjA0NiAwIDIwIDguOTU0IDIwIDIwdjE4OGMwIDExLjA0Ni04Ljk1NCAyMC0yMCAyMEg2NHYtMjU2aDk2eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==">
+
+    <title>命運飲料拉霸：Pro v6.0</title>
+    
+    <style>
+        /* 企業級視覺規範系統 */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #94a3b8;
+            --danger: #e11d48;
+            --success: #10b981;
+            --slot-h: 70px; /* 單格高度 */
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0; padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+            overflow-x: hidden;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 標題與視覺 */
+        .header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .badge-round {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-top: 8px;
+            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+        }
+
+        /* 拉霸主體區域 */
+        .slot-machine-deck {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 24px;
+            border: 6px solid #334155;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.4);
+            height: calc(var(--slot-h) + 20px);
+            position: relative;
+        }
+
+        /* 視線指引線 */
+        .slot-machine-deck::after {
+            content: "";
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 2px;
+            background: rgba(245, 158, 11, 0.3);
+            z-index: 10;
+            pointer-events: none;
+            transform: translateY(-50%);
+        }
+
+        .slot-col {
+            flex: 1;
+            background: #020617;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #1e293b;
+        }
+
+        /* 動畫核心：使用 transform 進行滾動 */
+        .slot-rail {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            /* 動畫時間與曲線由 JS 動態控制 */
+        }
+
+        .slot-item {
+            height: var(--slot-h);
+            min-height: var(--slot-h);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 4px;
+            word-break: break-all;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* 輸入與控制卡片 */
+        .input-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-box label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            padding-left: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-appearance: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background-color: #f0f7ff;
+        }
+
+        input:disabled {
+            background-color: #f8fafc;
+            color: #cbd5e1;
+            border-color: #f1f5f9;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            box-shadow: 0 6px 0 var(--primary-dark);
+            transition: all 0.1s;
+            cursor: pointer;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            box-shadow: 0 6px 0 #94a3b8;
+            opacity: 0.7;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: underline;
+            padding: 8px;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* 彈出視窗：強制居中且層級最高 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.92);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .modal {
+            background: var(--card);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 32px;
+            padding: 40px 24px;
+            text-align: center;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalIn {
+            0% { opacity: 0; transform: scale(0.8) translateY(40px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .winner-title {
+            background: var(--success);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .winner-name {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--danger);
+            line-height: 1;
+            margin: 15px 0;
+            word-break: break-all;
+            text-shadow: 2px 2px 0 white;
+        }
+
+        .winner-meta {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .btn-confirm {
+            width: 100%;
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            box-shadow: 0 4px 0 var(--primary-dark);
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="header">
+        <h1>命運拉霸 7 🏆</h1>
+        <div id="round-ui" class="badge-round">ROUND 1</div>
+    </div>
+
+    <!-- 拉霸視覺區 -->
+    <div class="slot-machine-deck">
+        <div class="slot-col"><div class="slot-rail" id="r-0"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-1"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-2"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-3"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-4"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-5"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-6"><div class="slot-item">?</div></div></div>
+    </div>
+
+    <div class="input-card">
+        <div class="input-grid">
+            <div class="input-box"><label>1</label><input type="text" class="p-input" placeholder="名字" maxlength="10"></div>
+            <div class="input-box"><label>2</label><input type="text" class="p-input" placeholder="名字" maxlength="10"></div>
+            <div class="input-box"><label>3</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
+            <div class="input-box"><label>4</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
+            <div class="input-box"><label>5</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
+            <div class="input-box"><label>6</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="spin-btn" class="btn-primary">🎰 啟動命運 SPIN</button>
+        <button id="reset-btn" class="btn-ghost">重置所有名單</button>
+    </div>
+
+    <div class="footer">
+        100% AIR-GAPPED READY • NO EXTERNAL LINKS<br>
+        PRO V6.0 AUDIO & ANIMATION FIX
+    </div>
+</div>
+
+<!-- 彈出視窗 -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div id="modal-tag" class="winner-title">最終決定</div>
+        <div id="winner-text" class="winner-name">---</div>
+        <div id="winner-meta" class="winner-meta">出現次數：-/7</div>
+        <button id="modal-btn" class="btn-confirm">確認並重新開始</button>
+    </div>
+</div>
+
+<script>
+/**
+ * 資深首席軟體工程師 - 音效與動畫修正模組
+ */
+(function() {
+    // --- 核心狀態 ---
+    let players = [];
+    let currentRound = 1;
+    let isSpinning = false;
+    let audioCtx = null;
+
+    // --- DOM 快取 ---
+    const spinBtn = document.getElementById('spin-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const rails = [0,1,2,3,4,5,6].map(i => document.getElementById(`r-${i}`));
+    const inputs = document.querySelectorAll('.p-input');
+    const roundUI = document.getElementById('round-ui');
+    const modal = document.getElementById('modal-overlay');
+    const winnerText = document.getElementById('winner-text');
+    const winnerMeta = document.getElementById('winner-meta');
+    const modalTag = document.getElementById('modal-tag');
+    const modalBtn = document.getElementById('modal-btn');
+
+    const ITEM_H = 70;
+
+    // 載入持久化數據
+    const saved = localStorage.getItem('draw_v6_players');
+    if (saved) {
+        const list = JSON.parse(saved);
+        inputs.forEach((inp, idx) => { if(list[idx]) inp.value = list[idx]; });
+    }
+
+    /**
+     * 高級 Web Audio 合成器：模擬物理質感
+     */
+    function playSfx(type) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const gain = audioCtx.createGain();
+        gain.connect(audioCtx.destination);
+
+        switch(type) {
+            case 'tick': // 清脆的齒輪撥動聲 (Noise + HighPass)
+                const noise = audioCtx.createBufferSource();
+                const bSize = audioCtx.sampleRate * 0.05;
+                const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+                const d = b.getChannelData(0);
+                for(let i=0; i<bSize; i++) d[i] = Math.random() * 2 - 1;
+                noise.buffer = b;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass'; filter.frequency.setValueAtTime(3000, now);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                noise.connect(filter); filter.connect(gain);
+                noise.start(now); noise.stop(now + 0.04);
+                break;
+
+            case 'ding': // 單格鎖定聲 (FM 合成金屬感)
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.connect(gain); osc.start(now); osc.stop(now + 0.5);
+                break;
+
+            case 'yay': // 慶祝和弦
+                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'triangle'; o.frequency.setValueAtTime(f, now + i * 0.1);
+                    g.gain.setValueAtTime(0.08, now + i * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.6);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.6);
+                });
+                break;
+        }
+    }
+
+    /**
+     * 安全輸出編碼
+     */
+    function safe(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    /**
+     * 執行拉霸序列
+     */
+    async function executeSpin() {
+        if (isSpinning) return;
+
+        // 初始化音訊 (必須由 User Interaction 啟動)
+        playSfx('none');
+
+        if (currentRound === 1) {
+            const raw = Array.from(inputs).map(i => i.value.trim()).filter(v => v);
+            players = [...new Set(raw)]; // 去重
+            if (players.length < 2) {
+                alert("請至少輸入兩位參賽者！");
+                return;
+            }
+            // 儲存至本地
+            localStorage.setItem('draw_v6_players', JSON.stringify(Array.from(inputs).map(i => i.value)));
+            inputs.forEach(i => i.disabled = true);
+        }
+
+        isSpinning = true;
+        spinBtn.disabled = true;
+        modal.style.display = 'none';
+
+        const finalResults = Array.from({length: 7}, () => players[Math.floor(Math.random() * players.length)]);
+        const itemsPerRail = 30; // 增加滾動長度
+
+        // 啟動所有軌道的動畫
+        const animPromises = rails.map((rail, idx) => {
+            return new Promise(resolve => {
+                // 1. 構建軌道內容
+                let html = '';
+                for (let i = 0; i < itemsPerRail; i++) {
+                    const rName = players[Math.floor(Math.random() * players.length)];
+                    html += `<div class="slot-item">${safe(rName)}</div>`;
+                }
+                html += `<div class="slot-item">${safe(finalResults[idx])}</div>`;
+                
+                // 2. 重置位置 (不帶動畫)
+                rail.style.transition = 'none';
+                rail.style.transform = 'translateY(0)';
+                rail.innerHTML = html;
+
+                // 3. 強制瀏覽器重繪 (Crucial Fix)
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const duration = 2.5 + (idx * 0.3); // 遞增停止時間
+                        
+                        // 轉動滴答聲模擬
+                        let lastTickTime = 0;
+                        const tickCount = itemsPerRail;
+                        const tickTimer = setInterval(() => {
+                            playSfx('tick');
+                        }, (duration * 1000) / tickCount);
+
+                        // 4. 開啟動畫
+                        rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0, 0, 1)`;
+                        rail.style.transform = `translateY(-${itemsPerRail * ITEM_H}px)`;
+                        
+                        setTimeout(() => {
+                            clearInterval(tickTimer);
+                            playSfx('ding'); // 停下時的重音
+                            resolve();
+                        }, duration * 1000);
+                    });
+                });
+            });
+        });
+
+        await Promise.all(animPromises);
+
+        // 分析結果
+        const counts = {};
+        finalResults.forEach(n => counts[n] = (counts[n] || 0) + 1);
+        let max = 0; let winners = [];
+        for (const n in counts) {
+            if (counts[n] > max) { max = counts[n]; winners = [n]; }
+            else if (counts[n] === max) winners.push(n);
+        }
+
+        // 彈出結果
+        setTimeout(() => {
+            if (winners.length > 1) {
+                currentRound++;
+                players = winners;
+                modalTag.textContent = "⚡ 平手決賽 ⚡";
+                modalTag.style.background = "var(--accent)";
+                winnerText.textContent = winners.join('、');
+                winnerText.style.fontSize = "2rem";
+                winnerMeta.textContent = `票數相同 (${max}/7)，進入第 ${currentRound} 輪決勝負！`;
+                modalBtn.textContent = "啟動決勝輪";
+            } else {
+                playSfx('yay');
+                modalTag.textContent = "🎉 命運指定 🎉";
+                modalTag.style.background = "var(--success)";
+                winnerText.textContent = winners[0];
+                winnerText.style.fontSize = "3.5rem";
+                winnerMeta.textContent = `在 7 格中中了 ${max} 格！恭喜買單 💸`;
+                modalBtn.textContent = "確認並重新開始";
+            }
+            modal.style.display = 'flex';
+            isSpinning = false;
+        }, 500);
+    }
+
+    // 事件處理
+    spinBtn.addEventListener('click', executeSpin);
+    
+    resetBtn.addEventListener('click', () => {
+        if (isSpinning) return;
+        localStorage.removeItem('draw_v6_players');
+        inputs.forEach(i => { i.value = ''; i.disabled = false; });
+        currentRound = 1;
+        roundUI.textContent = "ROUND 1";
+        roundUI.style.background = "var(--accent)";
+        modal.style.display = 'none';
+        spinBtn.disabled = false;
+        rails.forEach(r => { r.innerHTML = '<div class="slot-item">?</div>'; r.style.transform='translateY(0)'; });
+    });
+
+    modalBtn.addEventListener('click', () => {
+        if (modalBtn.textContent.includes("重新開始")) {
+            currentRound = 1;
+            roundUI.textContent = "ROUND 1";
+            roundUI.style.background = "var(--accent)";
+            inputs.forEach(i => i.disabled = false);
+            modal.style.display = 'none';
+            spinBtn.disabled = false;
+            spinBtn.textContent = "🎰 啟動命運 SPIN";
+        } else {
+            // 進入下一輪
+            modal.style.display = 'none';
+            roundUI.textContent = `ROUND ${currentRound} (決勝)`;
+            roundUI.style.background = "var(--danger)";
+            spinBtn.disabled = false;
+            spinBtn.textContent = "🔥 啟動決勝拉霸";
+        }
+    });
+
+    // PWA Service Worker 離線邏輯
+    if ('serviceWorker' in navigator) {
+        const sw = `const C='v6-fix';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+        const b = new Blob([sw], {type: 'application/javascript'});
+        navigator.serviceWorker.register(URL.createObjectURL(b));
+    }
+})();
+</script>
+</body>
+</html>
