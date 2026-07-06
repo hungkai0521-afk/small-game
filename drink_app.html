@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
+
     <!-- PWA / iOS App 專用設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="誰買飲料">
-    
+    <meta name="theme-color" content="#0f172a">
+
     <!-- 內網環境 PWA Manifest -->
     <link rel="manifest" href="data:application/json;base64,ewogICJpZCI6ICIvIiwKICAic2NvcGUiOiAiLi8iLAogICJzdGFyd_VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgIm5hbWUiOiAi6Kqw6KaB6LK36aOy5paZ77yM5ZG96YGL5ouJ6Zy4IiwKICAic2hvcnRfbmFtZSI6ICLogq3mmpQiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjFmNWY5Igp9">
-    
+
     <!-- App 圖示 (SVG 轉 Data URI) -->
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0iIzI1NjNlYiIvPjxwYXRoIGQ9Ik0zNTIgMTI4SDI1NnYyNTZoOTZjMTEuMDQ2IDAgMjAtOC45NTQgMjAtMjBWMTQ4YzAtMTEuMDQ2LTguOTU0LTIwLTIwLTIwek0xNjAgMTI4YzExLjA0NiAwIDIwIDguOTU0IDIwIDIwdjE4OGMwIDExLjA0Ni04Ljk1NCAyMC0yMCAyMEg2NHYtMjU2aDk2eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==">
 
-    <title>命運飲料拉霸：Pro v6.0</title>
-    
+    <title>命運飲料拉霸 v7</title>
+
     <style>
-        /* 企業級視覺規範系統 */
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;
             --accent: #f59e0b;
-            --bg: #f8fafc;
+            --gold: #fbbf24;
+            --bg: #f1f5f9;
             --card: #ffffff;
             --text-main: #1e293b;
             --text-muted: #94a3b8;
             --danger: #e11d48;
             --success: #10b981;
-            --slot-h: 70px; /* 單格高度 */
+            --slot-h: 76px;
             --safe-top: env(safe-area-inset-top);
             --safe-bottom: env(safe-area-inset-bottom);
         }
@@ -42,7 +44,9 @@
 
         body {
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
+            background:
+                radial-gradient(1200px 600px at 50% -10%, #dbeafe 0%, transparent 60%),
+                var(--bg);
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -62,71 +66,67 @@
             gap: 16px;
         }
 
-        /* 標題與視覺 */
-        .header {
-            text-align: center;
-            padding: 10px 0;
-        }
-
+        /* 標題 */
+        .header { text-align: center; padding: 6px 0 0; }
         .header h1 {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             color: var(--primary);
             font-weight: 900;
             letter-spacing: -1px;
         }
-
-        .badge-round {
-            display: inline-block;
-            background: var(--accent);
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            margin-top: 8px;
-            box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+        .header .sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-top: 2px;
         }
 
-        /* 拉霸主體區域 */
+        /* 拉霸主體 */
         .slot-machine-deck {
             display: flex;
-            gap: 4px;
-            background: #0f172a;
-            padding: 10px;
+            gap: 5px;
+            background: linear-gradient(180deg, #1e293b, #0f172a);
+            padding: 12px;
             border-radius: 24px;
             border: 6px solid #334155;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.4);
-            height: calc(var(--slot-h) + 20px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.45), inset 0 2px 6px rgba(255,255,255,0.06);
+            height: calc(var(--slot-h) + 24px);
             position: relative;
+            transition: box-shadow 0.4s, border-color 0.4s;
         }
-
-        /* 視線指引線 */
+        .slot-machine-deck.jackpot {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(251,191,36,0.35), 0 20px 50px -8px rgba(251,191,36,0.5);
+        }
+        /* 中線指引 */
+        .slot-machine-deck::before,
         .slot-machine-deck::after {
             content: "";
             position: absolute;
-            top: 50%; left: 0; right: 0;
+            left: 6px; right: 6px;
             height: 2px;
-            background: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.35);
             z-index: 10;
             pointer-events: none;
-            transform: translateY(-50%);
         }
+        .slot-machine-deck::before { top: calc(50% - 1px); }
+        .slot-machine-deck::after  { top: calc(50% - 1px); box-shadow: 0 0 12px 2px rgba(245,158,11,0.25); }
 
         .slot-col {
             flex: 1;
+            min-width: 0;
             background: #020617;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
             position: relative;
             border: 1px solid #1e293b;
+            box-shadow: inset 0 8px 12px -6px rgba(0,0,0,0.9), inset 0 -8px 12px -6px rgba(0,0,0,0.9);
         }
 
-        /* 動畫核心：使用 transform 進行滾動 */
         .slot-rail {
             width: 100%;
             display: flex;
             flex-direction: column;
-            /* 動畫時間與曲線由 JS 動態控制 */
         }
 
         .slot-item {
@@ -136,44 +136,45 @@
             align-items: center;
             justify-content: center;
             color: #f8fafc;
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.82rem;
+            font-weight: 800;
             text-align: center;
             padding: 4px;
-            word-break: break-all;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.05;
+            overflow: hidden;
+            word-break: break-word;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
         }
+        .slot-item.lit {
+            color: #1e293b;
+            background: radial-gradient(circle at 50% 40%, var(--gold), var(--accent));
+            text-shadow: none;
+            animation: pop 0.4s ease;
+        }
+        @keyframes pop { 0%{transform:scale(0.7)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
 
-        /* 輸入與控制卡片 */
+        /* 輸入卡片 */
         .input-card {
             background: var(--card);
             border-radius: 24px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
         }
-
         .input-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-
-        .input-box {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
+        .input-box { display: flex; flex-direction: column; gap: 6px; }
         .input-box label {
             font-size: 0.75rem;
             font-weight: 800;
             color: var(--text-muted);
             padding-left: 4px;
         }
-
-        input {
+        input[type=text] {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             border: 2px solid #e2e8f0;
             border-radius: 14px;
             font-size: 1rem;
@@ -181,42 +182,47 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-appearance: none;
         }
+        input[type=text]:focus { border-color: var(--primary); background-color: #f0f7ff; }
+        input[type=text]:disabled { background-color: #f8fafc; color: #cbd5e1; border-color: #f1f5f9; }
 
-        input:focus {
-            border-color: var(--primary);
-            background-color: #f0f7ff;
+        .opt-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px dashed #e2e8f0;
         }
-
-        input:disabled {
-            background-color: #f8fafc;
-            color: #cbd5e1;
-            border-color: #f1f5f9;
+        .opt-row label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            user-select: none;
         }
+        .opt-row input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--primary); }
 
+        /* 控制 */
+        .controls { display: flex; flex-direction: column; gap: 4px; }
         .btn-primary {
             width: 100%;
             padding: 20px;
-            background: var(--primary);
+            background: linear-gradient(180deg, #3b82f6, var(--primary));
             color: white;
             border: none;
             border-radius: 20px;
-            font-size: 1.2rem;
-            font-weight: 800;
+            font-size: 1.25rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
             box-shadow: 0 6px 0 var(--primary-dark);
-            transition: all 0.1s;
+            transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
             cursor: pointer;
         }
-
-        .btn-primary:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 var(--primary-dark);
-        }
-
-        .btn-primary:disabled {
-            background: #cbd5e1;
-            box-shadow: 0 6px 0 #94a3b8;
-            opacity: 0.7;
-        }
+        .btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--primary-dark); }
+        .btn-primary:disabled { background: #cbd5e1; box-shadow: 0 6px 0 #94a3b8; opacity: 0.7; }
+        .btn-primary.spinning { animation: buzz 0.4s linear infinite; }
+        @keyframes buzz { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-1px)} 75%{transform:translateY(1px)} }
 
         .btn-ghost {
             background: transparent;
@@ -225,106 +231,102 @@
             font-size: 0.85rem;
             font-weight: 600;
             text-decoration: underline;
-            padding: 8px;
+            padding: 10px;
             cursor: pointer;
             width: 100%;
-            text-align: center;
         }
 
-        /* 彈出視窗：強制居中且層級最高 */
+        /* 紀錄 */
+        .history {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 14px 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);
+        }
+        .history .h-head {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.72rem; font-weight: 800; color: var(--text-muted);
+            margin-bottom: 8px; letter-spacing: 0.5px;
+        }
+        .history .h-clear { cursor: pointer; text-decoration: underline; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip {
+            background: #eff6ff;
+            color: var(--primary-dark);
+            border: 1px solid #dbeafe;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .chip.latest { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .chips .empty { color: var(--text-muted); font-size: 0.78rem; }
+
+        /* 彈窗 */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed; inset: 0;
             background: rgba(15, 23, 42, 0.92);
             display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 24px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            justify-content: center; align-items: center;
+            z-index: 1000; padding: 24px;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
-
         .modal {
             background: var(--card);
-            width: 100%;
-            max-width: 400px;
+            width: 100%; max-width: 400px;
             border-radius: 32px;
-            padding: 40px 24px;
+            padding: 36px 24px 28px;
             text-align: center;
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
             animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        @keyframes modalIn {
-            0% { opacity: 0; transform: scale(0.8) translateY(40px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
+        @keyframes modalIn { 0%{opacity:0; transform:scale(0.8) translateY(40px)} 100%{opacity:1; transform:scale(1) translateY(0)} }
         .winner-title {
-            background: var(--success);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            display: inline-block;
+            background: var(--success); color: white;
+            padding: 6px 16px; border-radius: 30px;
+            font-size: 0.9rem; font-weight: 800;
+            margin-bottom: 18px; display: inline-block;
         }
-
         .winner-name {
-            font-size: 3.5rem;
-            font-weight: 900;
-            color: var(--danger);
-            line-height: 1;
-            margin: 15px 0;
-            word-break: break-all;
-            text-shadow: 2px 2px 0 white;
+            font-size: 3.4rem; font-weight: 900;
+            color: var(--danger); line-height: 1.05;
+            margin: 12px 0; word-break: break-word;
+            text-shadow: 2px 2px 0 #fff;
         }
-
-        .winner-meta {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
-
+        .winner-meta { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 10px; }
         .btn-confirm {
-            width: 100%;
-            padding: 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            box-shadow: 0 4px 0 var(--primary-dark);
+            flex: 1; padding: 18px 10px;
+            border: none; border-radius: 16px;
+            font-size: 1.05rem; font-weight: 800; cursor: pointer;
         }
+        .btn-confirm.again { background: var(--primary); color: #fff; box-shadow: 0 4px 0 var(--primary-dark); }
+        .btn-confirm.edit  { background: #e2e8f0; color: var(--text-main); box-shadow: 0 4px 0 #cbd5e1; }
+        .btn-confirm:active { transform: translateY(4px); box-shadow: none; }
 
-        .footer {
-            text-align: center;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            padding: 10px 0;
-        }
+        .footer { text-align: center; font-size: 0.68rem; color: var(--text-muted); padding: 6px 0 2px; line-height: 1.6; }
+
+        /* 彩帶畫布 */
+        #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1500; }
     </style>
 </head>
 <body>
 
+<canvas id="confetti"></canvas>
+
 <div class="app-shell">
     <div class="header">
-        <h1>命運拉霸 7 🏆</h1>
-        <div id="round-ui" class="badge-round">ROUND 1</div>
+        <h1>命運飲料拉霸 🎰</h1>
+        <div class="sub">公平抽出誰請這攤 · 每人等機率</div>
     </div>
 
-    <!-- 拉霸視覺區 -->
-    <div class="slot-machine-deck">
+    <!-- 拉霸視覺區 (5 軸) -->
+    <div class="slot-machine-deck" id="deck">
         <div class="slot-col"><div class="slot-rail" id="r-0"><div class="slot-item">?</div></div></div>
         <div class="slot-col"><div class="slot-rail" id="r-1"><div class="slot-item">?</div></div></div>
-        <div class="slot-col"><div class="slot-rail" id="r-2"><div class="slot-item">?</div></div></div>
+        <div class="slot-col"><div class="slot-rail" id="r-2"><div class="slot-item">🍹</div></div></div>
         <div class="slot-col"><div class="slot-rail" id="r-3"><div class="slot-item">?</div></div></div>
         <div class="slot-col"><div class="slot-rail" id="r-4"><div class="slot-item">?</div></div></div>
-        <div class="slot-col"><div class="slot-rail" id="r-5"><div class="slot-item">?</div></div></div>
-        <div class="slot-col"><div class="slot-rail" id="r-6"><div class="slot-item">?</div></div></div>
     </div>
 
     <div class="input-card">
@@ -336,264 +338,315 @@
             <div class="input-box"><label>5</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
             <div class="input-box"><label>6</label><input type="text" class="p-input" placeholder="選填" maxlength="10"></div>
         </div>
+        <div class="opt-row">
+            <label><input type="checkbox" id="excl-last"> 排除上一位買單者(避免連莊)</label>
+        </div>
     </div>
 
     <div class="controls">
-        <button id="spin-btn" class="btn-primary">🎰 啟動命運 SPIN</button>
-        <button id="reset-btn" class="btn-ghost">重置所有名單</button>
+        <button id="spin-btn" class="btn-primary">🎰 抽出苦主</button>
+        <button id="reset-btn" class="btn-ghost">清空名單</button>
+    </div>
+
+    <div class="history">
+        <div class="h-head"><span>最近買單</span><span class="h-clear" id="hist-clear">清除紀錄</span></div>
+        <div class="chips" id="hist-chips"><span class="empty">還沒有紀錄</span></div>
     </div>
 
     <div class="footer">
-        100% AIR-GAPPED READY • NO EXTERNAL LINKS<br>
-        PRO V6.0 AUDIO & ANIMATION FIX
+        100% 離線可用 · 無外部連線<br>
+        v7 · crypto 公平亂數 + 震動 + 彩帶
     </div>
 </div>
 
 <!-- 彈出視窗 -->
 <div id="modal-overlay" class="modal-overlay">
     <div class="modal">
-        <div id="modal-tag" class="winner-title">最終決定</div>
+        <div id="modal-tag" class="winner-title">🎯 命運指定</div>
         <div id="winner-text" class="winner-name">---</div>
-        <div id="winner-meta" class="winner-meta">出現次數：-/7</div>
-        <button id="modal-btn" class="btn-confirm">確認並重新開始</button>
+        <div id="winner-meta" class="winner-meta">這攤你請 💸</div>
+        <div class="modal-actions">
+            <button id="btn-edit" class="btn-confirm edit">改名單</button>
+            <button id="btn-again" class="btn-confirm again">再抽一次</button>
+        </div>
     </div>
 </div>
 
 <script>
-/**
- * 資深首席軟體工程師 - 音效與動畫修正模組
- */
 (function() {
-    // --- 核心狀態 ---
-    let players = [];
-    let currentRound = 1;
+    "use strict";
+
+    // --- 狀態 ---
     let isSpinning = false;
     let audioCtx = null;
+    let lastLoser = null;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // --- DOM 快取 ---
-    const spinBtn = document.getElementById('spin-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const rails = [0,1,2,3,4,5,6].map(i => document.getElementById(`r-${i}`));
-    const inputs = document.querySelectorAll('.p-input');
-    const roundUI = document.getElementById('round-ui');
-    const modal = document.getElementById('modal-overlay');
-    const winnerText = document.getElementById('winner-text');
-    const winnerMeta = document.getElementById('winner-meta');
-    const modalTag = document.getElementById('modal-tag');
-    const modalBtn = document.getElementById('modal-btn');
+    // --- DOM ---
+    const spinBtn   = document.getElementById('spin-btn');
+    const resetBtn  = document.getElementById('reset-btn');
+    const rails     = [0,1,2,3,4].map(i => document.getElementById('r-' + i));
+    const inputs    = document.querySelectorAll('.p-input');
+    const exclLast  = document.getElementById('excl-last');
+    const deck      = document.getElementById('deck');
+    const modal     = document.getElementById('modal-overlay');
+    const winnerText= document.getElementById('winner-text');
+    const winnerMeta= document.getElementById('winner-meta');
+    const modalTag  = document.getElementById('modal-tag');
+    const btnAgain  = document.getElementById('btn-again');
+    const btnEdit   = document.getElementById('btn-edit');
+    const histChips = document.getElementById('hist-chips');
+    const histClear = document.getElementById('hist-clear');
 
-    const ITEM_H = 70;
+    const ITEM_H = 76;   // 對齊 CSS --slot-h
+    const REELS  = rails.length;
 
-    // 載入持久化數據
-    const saved = localStorage.getItem('draw_v6_players');
-    if (saved) {
-        const list = JSON.parse(saved);
-        inputs.forEach((inp, idx) => { if(list[idx]) inp.value = list[idx]; });
+    // --- 持久化 ---
+    const K_NAMES = 'draw_v7_names', K_HIST = 'draw_v7_hist', K_EXCL = 'draw_v7_excl';
+    try {
+        const savedNames = JSON.parse(localStorage.getItem(K_NAMES) || 'null');
+        if (Array.isArray(savedNames)) inputs.forEach((inp, i) => { if (savedNames[i]) inp.value = savedNames[i]; });
+        exclLast.checked = localStorage.getItem(K_EXCL) === '1';
+    } catch (e) {}
+    let history = loadHistory();
+    lastLoser = history[0] || null;
+    renderHistory();
+
+    function loadHistory() {
+        try { const h = JSON.parse(localStorage.getItem(K_HIST) || '[]'); return Array.isArray(h) ? h : []; }
+        catch (e) { return []; }
+    }
+    function saveNames() {
+        localStorage.setItem(K_NAMES, JSON.stringify(Array.from(inputs).map(i => i.value)));
     }
 
-    /**
-     * 高級 Web Audio 合成器：模擬物理質感
-     */
-    function playSfx(type) {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // --- 公平亂數：crypto 無偏取樣 ---
+    function pick(arr) {
+        const n = arr.length;
+        const buf = new Uint32Array(1);
+        const limit = Math.floor(0xFFFFFFFF / n) * n; // 拒絕取樣，去除模數偏差
+        let x;
+        do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+        return arr[x % n];
+    }
+
+    // --- 震動 ---
+    function vibrate(p) { if (!reduceMotion && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+
+    // --- 安全輸出 ---
+    function safe(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // --- 音效 ---
+    function unlockAudio() {
+        if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
+    }
+    function playSfx(type) {
+        if (!audioCtx) return;
         const now = audioCtx.currentTime;
-        const gain = audioCtx.createGain();
-        gain.connect(audioCtx.destination);
-
-        switch(type) {
-            case 'tick': // 清脆的齒輪撥動聲 (Noise + HighPass)
-                const noise = audioCtx.createBufferSource();
-                const bSize = audioCtx.sampleRate * 0.05;
-                const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
-                const d = b.getChannelData(0);
-                for(let i=0; i<bSize; i++) d[i] = Math.random() * 2 - 1;
-                noise.buffer = b;
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'highpass'; filter.frequency.setValueAtTime(3000, now);
-                gain.gain.setValueAtTime(0.05, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                noise.connect(filter); filter.connect(gain);
-                noise.start(now); noise.stop(now + 0.04);
-                break;
-
-            case 'ding': // 單格鎖定聲 (FM 合成金屬感)
-                const osc = audioCtx.createOscillator();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now);
-                gain.gain.setValueAtTime(0.12, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                osc.connect(gain); osc.start(now); osc.stop(now + 0.5);
-                break;
-
-            case 'yay': // 慶祝和弦
-                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-                    const o = audioCtx.createOscillator();
-                    const g = audioCtx.createGain();
-                    o.type = 'triangle'; o.frequency.setValueAtTime(f, now + i * 0.1);
-                    g.gain.setValueAtTime(0.08, now + i * 0.1);
-                    g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.6);
-                    o.connect(g); g.connect(audioCtx.destination);
-                    o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.6);
-                });
-                break;
+        if (type === 'tick') {
+            const bSize = Math.floor(audioCtx.sampleRate * 0.05);
+            const b = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+            const d = b.getChannelData(0);
+            for (let i = 0; i < bSize; i++) d[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource(); noise.buffer = b;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass'; filter.frequency.setValueAtTime(3000, now);
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.05, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            noise.connect(filter); filter.connect(g); g.connect(audioCtx.destination);
+            noise.start(now); noise.stop(now + 0.04);
+        } else if (type === 'ding') {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now);
+            g.gain.setValueAtTime(0.12, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.5);
+        } else if (type === 'yay') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = 'triangle'; o.frequency.setValueAtTime(f, now + i * 0.1);
+                g.gain.setValueAtTime(0.08, now + i * 0.1);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.6);
+                o.connect(g); g.connect(audioCtx.destination);
+                o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.6);
+            });
         }
     }
 
-    /**
-     * 安全輸出編碼
-     */
-    function safe(s) {
-        const d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-    }
-
-    /**
-     * 執行拉霸序列
-     */
-    async function executeSpin() {
-        if (isSpinning) return;
-
-        // 初始化音訊 (必須由 User Interaction 啟動)
-        playSfx('none');
-
-        if (currentRound === 1) {
-            const raw = Array.from(inputs).map(i => i.value.trim()).filter(v => v);
-            players = [...new Set(raw)]; // 去重
-            if (players.length < 2) {
-                alert("請至少輸入兩位參賽者！");
-                return;
+    // --- 彩帶 ---
+    function confetti() {
+        if (reduceMotion) return;
+        const cv = document.getElementById('confetti');
+        const ctx = cv.getContext('2d');
+        const W = cv.width = window.innerWidth;
+        const H = cv.height = window.innerHeight;
+        const colors = ['#f59e0b', '#2563eb', '#10b981', '#e11d48', '#8b5cf6', '#fbbf24'];
+        const P = Array.from({ length: 140 }, () => ({
+            x: Math.random() * W, y: -20 - Math.random() * H * 0.3,
+            r: 5 + Math.random() * 7, c: colors[Math.floor(Math.random() * colors.length)],
+            vx: -2.5 + Math.random() * 5, vy: 3 + Math.random() * 4,
+            rot: Math.random() * 6.28, vr: -0.25 + Math.random() * 0.5
+        }));
+        let t = 0;
+        (function frame() {
+            ctx.clearRect(0, 0, W, H);
+            for (const p of P) {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.vr;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+                ctx.restore();
             }
-            // 儲存至本地
-            localStorage.setItem('draw_v6_players', JSON.stringify(Array.from(inputs).map(i => i.value)));
-            inputs.forEach(i => i.disabled = true);
+            t++;
+            if (t < 200) requestAnimationFrame(frame);
+            else ctx.clearRect(0, 0, W, H);
+        })();
+    }
+
+    // --- 單軸動畫 ---
+    function animateReel(rail, idx, loser, pool) {
+        return new Promise(resolve => {
+            const N = 24;
+            let html = '';
+            for (let i = 0; i < N; i++) html += '<div class="slot-item">' + safe(pick(pool)) + '</div>';
+            html += '<div class="slot-item final">' + safe(loser) + '</div>';
+
+            rail.style.transition = 'none';
+            rail.style.transform = 'translateY(0)';
+            rail.innerHTML = html;
+
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const dur = reduceMotion ? 0.4 : (2.0 + idx * 0.35);
+                let ticker = null;
+                if (!reduceMotion) {
+                    ticker = setInterval(() => { playSfx('tick'); vibrate(6); }, (dur * 1000) / N);
+                }
+                rail.style.transition = 'transform ' + dur + 's cubic-bezier(0.12, 0, 0, 1)';
+                rail.style.transform = 'translateY(-' + (N * ITEM_H) + 'px)';
+                setTimeout(() => {
+                    if (ticker) clearInterval(ticker);
+                    playSfx('ding'); vibrate(28);
+                    if (rail.lastElementChild) rail.lastElementChild.classList.add('lit');
+                    resolve();
+                }, dur * 1000);
+            }));
+        });
+    }
+
+    // --- 主流程 ---
+    async function spin() {
+        if (isSpinning) return;
+        unlockAudio();
+
+        const raw = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+        const uniq = Array.from(new Set(raw));
+        if (uniq.length < 2) { alert('請至少輸入兩位參賽者！'); return; }
+
+        saveNames();
+        inputs.forEach(i => i.disabled = true);
+
+        // 抽池：可選排除上一位(需 >2 人才排，否則失去意義)
+        let pool = uniq.slice();
+        if (exclLast.checked && lastLoser && uniq.length > 2 && pool.includes(lastLoser)) {
+            pool = pool.filter(n => n !== lastLoser);
         }
+        const loser = pick(pool);
 
         isSpinning = true;
         spinBtn.disabled = true;
+        spinBtn.classList.add('spinning');
+        deck.classList.remove('jackpot');
         modal.style.display = 'none';
 
-        const finalResults = Array.from({length: 7}, () => players[Math.floor(Math.random() * players.length)]);
-        const itemsPerRail = 30; // 增加滾動長度
+        // 五軸全部對齊到中獎者(jackpot)，抽獎池用完整名單增加懸念
+        await Promise.all(rails.map((rail, idx) => animateReel(rail, idx, loser, uniq)));
 
-        // 啟動所有軌道的動畫
-        const animPromises = rails.map((rail, idx) => {
-            return new Promise(resolve => {
-                // 1. 構建軌道內容
-                let html = '';
-                for (let i = 0; i < itemsPerRail; i++) {
-                    const rName = players[Math.floor(Math.random() * players.length)];
-                    html += `<div class="slot-item">${safe(rName)}</div>`;
-                }
-                html += `<div class="slot-item">${safe(finalResults[idx])}</div>`;
-                
-                // 2. 重置位置 (不帶動畫)
-                rail.style.transition = 'none';
-                rail.style.transform = 'translateY(0)';
-                rail.innerHTML = html;
-
-                // 3. 強制瀏覽器重繪 (Crucial Fix)
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        const duration = 2.5 + (idx * 0.3); // 遞增停止時間
-                        
-                        // 轉動滴答聲模擬
-                        let lastTickTime = 0;
-                        const tickCount = itemsPerRail;
-                        const tickTimer = setInterval(() => {
-                            playSfx('tick');
-                        }, (duration * 1000) / tickCount);
-
-                        // 4. 開啟動畫
-                        rail.style.transition = `transform ${duration}s cubic-bezier(0.15, 0, 0, 1)`;
-                        rail.style.transform = `translateY(-${itemsPerRail * ITEM_H}px)`;
-                        
-                        setTimeout(() => {
-                            clearInterval(tickTimer);
-                            playSfx('ding'); // 停下時的重音
-                            resolve();
-                        }, duration * 1000);
-                    });
-                });
-            });
-        });
-
-        await Promise.all(animPromises);
-
-        // 分析結果
-        const counts = {};
-        finalResults.forEach(n => counts[n] = (counts[n] || 0) + 1);
-        let max = 0; let winners = [];
-        for (const n in counts) {
-            if (counts[n] > max) { max = counts[n]; winners = [n]; }
-            else if (counts[n] === max) winners.push(n);
-        }
-
-        // 彈出結果
-        setTimeout(() => {
-            if (winners.length > 1) {
-                currentRound++;
-                players = winners;
-                modalTag.textContent = "⚡ 平手決賽 ⚡";
-                modalTag.style.background = "var(--accent)";
-                winnerText.textContent = winners.join('、');
-                winnerText.style.fontSize = "2rem";
-                winnerMeta.textContent = `票數相同 (${max}/7)，進入第 ${currentRound} 輪決勝負！`;
-                modalBtn.textContent = "啟動決勝輪";
-            } else {
-                playSfx('yay');
-                modalTag.textContent = "🎉 命運指定 🎉";
-                modalTag.style.background = "var(--success)";
-                winnerText.textContent = winners[0];
-                winnerText.style.fontSize = "3.5rem";
-                winnerMeta.textContent = `在 7 格中中了 ${max} 格！恭喜買單 💸`;
-                modalBtn.textContent = "確認並重新開始";
-            }
-            modal.style.display = 'flex';
-            isSpinning = false;
-        }, 500);
+        lastLoser = loser;
+        pushHistory(loser);
+        celebrate(loser);
     }
 
-    // 事件處理
-    spinBtn.addEventListener('click', executeSpin);
-    
+    function celebrate(loser) {
+        playSfx('yay');
+        vibrate([0, 60, 40, 60, 40, 130]);
+        confetti();
+        deck.classList.add('jackpot');
+        winnerText.textContent = loser;
+        winnerMeta.textContent = '五軸連線！這攤換你請 💸';
+        setTimeout(() => {
+            modal.style.display = 'flex';
+            spinBtn.classList.remove('spinning');
+            isSpinning = false;
+        }, 650);
+    }
+
+    // --- 紀錄 ---
+    function pushHistory(name) {
+        history.unshift(name);
+        history = history.slice(0, 8);
+        localStorage.setItem(K_HIST, JSON.stringify(history));
+        renderHistory();
+    }
+    function renderHistory() {
+        if (!history.length) { histChips.innerHTML = '<span class="empty">還沒有紀錄</span>'; return; }
+        histChips.innerHTML = history
+            .map((n, i) => '<span class="chip' + (i === 0 ? ' latest' : '') + '">' + safe(n) + '</span>')
+            .join('');
+    }
+
+    // --- 事件 ---
+    spinBtn.addEventListener('click', spin);
+
     resetBtn.addEventListener('click', () => {
         if (isSpinning) return;
-        localStorage.removeItem('draw_v6_players');
+        localStorage.removeItem(K_NAMES);
         inputs.forEach(i => { i.value = ''; i.disabled = false; });
-        currentRound = 1;
-        roundUI.textContent = "ROUND 1";
-        roundUI.style.background = "var(--accent)";
+        deck.classList.remove('jackpot');
+        rails.forEach(r => { r.innerHTML = '<div class="slot-item">?</div>'; r.style.transition = 'none'; r.style.transform = 'translateY(0)'; });
         modal.style.display = 'none';
         spinBtn.disabled = false;
-        rails.forEach(r => { r.innerHTML = '<div class="slot-item">?</div>'; r.style.transform='translateY(0)'; });
     });
 
-    modalBtn.addEventListener('click', () => {
-        if (modalBtn.textContent.includes("重新開始")) {
-            currentRound = 1;
-            roundUI.textContent = "ROUND 1";
-            roundUI.style.background = "var(--accent)";
-            inputs.forEach(i => i.disabled = false);
-            modal.style.display = 'none';
-            spinBtn.disabled = false;
-            spinBtn.textContent = "🎰 啟動命運 SPIN";
-        } else {
-            // 進入下一輪
-            modal.style.display = 'none';
-            roundUI.textContent = `ROUND ${currentRound} (決勝)`;
-            roundUI.style.background = "var(--danger)";
-            spinBtn.disabled = false;
-            spinBtn.textContent = "🔥 啟動決勝拉霸";
-        }
+    exclLast.addEventListener('change', () => {
+        localStorage.setItem(K_EXCL, exclLast.checked ? '1' : '0');
     });
 
-    // PWA Service Worker 離線邏輯
+    histClear.addEventListener('click', () => {
+        history = [];
+        localStorage.removeItem(K_HIST);
+        renderHistory();
+    });
+
+    btnAgain.addEventListener('click', () => {
+        modal.style.display = 'none';
+        spinBtn.disabled = false;
+        spin(); // 沿用同一份名單(即使 input 已鎖，值仍在)
+    });
+
+    btnEdit.addEventListener('click', () => {
+        modal.style.display = 'none';
+        inputs.forEach(i => i.disabled = false);
+        deck.classList.remove('jackpot');
+        rails.forEach(r => { r.querySelectorAll('.lit').forEach(el => el.classList.remove('lit')); });
+        spinBtn.disabled = false;
+    });
+
+    // Enter 直接開抽
+    inputs.forEach(inp => inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); spin(); }
+    }));
+
+    // --- PWA Service Worker (離線) ---
     if ('serviceWorker' in navigator) {
-        const sw = `const C='v6-fix';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
-        const b = new Blob([sw], {type: 'application/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(b));
+        try {
+            const sw = "const C='v7';self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(['./'])))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));";
+            const b = new Blob([sw], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(b));
+        } catch (e) {}
     }
 })();
 </script>
