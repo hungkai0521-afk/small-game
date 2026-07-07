@@ -183,7 +183,7 @@ input[type=text]:disabled{opacity:.35}
     <a class="back" href="index.html">← 遊樂場</a>
     <h1>命運拉霸 🎰</h1>
   </div>
-  <div class="sub">五軸開獎 · 每人等機率 · 出現最多次的人請</div>
+  <div class="sub">五軸各自隨機 · 出現最多次的人請 · 平手進決勝輪</div>
 
   <div class="deck" id="deck">
     <div class="slot-col"><div class="slot-rail" id="r-0"><div class="slot-item">?</div></div></div>
@@ -250,6 +250,7 @@ input[type=text]:disabled{opacity:.35}
     const modal     = document.getElementById('modal-overlay');
     const winnerText= document.getElementById('winner-text');
     const winnerMeta= document.getElementById('winner-meta');
+    const modalTag  = document.getElementById('modal-tag');
     const btnAgain  = document.getElementById('btn-again');
     const btnEdit   = document.getElementById('btn-edit');
     const histChips = document.getElementById('hist-chips');
@@ -365,7 +366,7 @@ input[type=text]:disabled{opacity:.35}
         })();
     }
 
-    function animateReel(rail, idx, face, isLoser, pool) {
+    function animateReel(rail, idx, face, pool) {
         return new Promise(resolve => {
             const N = 24;
             let html = '';
@@ -391,7 +392,6 @@ input[type=text]:disabled{opacity:.35}
                 setTimeout(() => {
                     if (ticker) clearInterval(ticker);
                     playSfx('ding'); vibrate(28);
-                    if (isLoser && rail.lastElementChild) rail.lastElementChild.classList.add('lit');
                     resolve();
                 }, dur * 1000);
             };
@@ -399,6 +399,8 @@ input[type=text]:disabled{opacity:.35}
             setTimeout(kick, 120);
         });
     }
+
+    let tiePool = null; // 平手決勝輪的候選人
 
     async function spin() {
         if (isSpinning) return;
@@ -411,11 +413,16 @@ input[type=text]:disabled{opacity:.35}
         saveNames();
         inputs.forEach(i => i.disabled = true);
 
-        let pool = uniq.slice();
-        if (exclLast.checked && lastLoser && uniq.length > 2 && pool.includes(lastLoser)) {
-            pool = pool.filter(n => n !== lastLoser);
+        // 抽池:決勝輪只剩平手者;首輪可排除上一位
+        let pool;
+        if (tiePool && tiePool.length > 1) {
+            pool = tiePool.slice();
+        } else {
+            pool = uniq.slice();
+            if (exclLast.checked && lastLoser && uniq.length > 2 && pool.includes(lastLoser)) {
+                pool = pool.filter(n => n !== lastLoser);
+            }
         }
-        const loser = pick(pool);
 
         isSpinning = true;
         spinBtn.disabled = true;
@@ -423,28 +430,62 @@ input[type=text]:disabled{opacity:.35}
         deck.classList.remove('jackpot');
         modal.style.display = 'none';
 
-        // 開獎面:苦主佔 3 格 + 2 個路人,前四軸洗牌、最後一軸(最晚停)必為苦主決勝
-        const others = uniq.filter(n => n !== loser);
-        let d1 = pick(others), d2 = d1;
-        if (others.length > 1) d2 = pick(others.filter(n => n !== d1));
-        const faces = shuffle([loser, loser, d1, d2]);
-        faces.push(loser);
+        // 五軸各自獨立隨機,轉完才知道答案
+        const faces = Array.from({ length: rails.length }, () => pick(pool));
 
         await Promise.all(rails.map((rail, idx) =>
-            animateReel(rail, idx, faces[idx], faces[idx] === loser, uniq)));
+            animateReel(rail, idx, faces[idx], pool)));
 
-        lastLoser = loser;
-        pushHistory(loser);
-        celebrate(loser);
+        // 開票:出現最多次的人請;同票 → 決勝輪
+        const counts = {};
+        faces.forEach(n => counts[n] = (counts[n] || 0) + 1);
+        let max = 0, top = [];
+        for (const n in counts) {
+            if (counts[n] > max) { max = counts[n]; top = [n]; }
+            else if (counts[n] === max) top.push(n);
+        }
+        // 點亮最高票的格子
+        rails.forEach((rail, i) => {
+            if (top.includes(faces[i]) && rail.lastElementChild) rail.lastElementChild.classList.add('lit');
+        });
+
+        if (top.length === 1) {
+            tiePool = null;
+            const loser = top[0];
+            lastLoser = loser;
+            pushHistory(loser);
+            celebrate(loser, max);
+        } else {
+            tiePool = top;
+            showTie(top, max);
+        }
     }
 
-    function celebrate(loser) {
+    function celebrate(loser, max) {
         playSfx('yay');
         vibrate([0, 60, 40, 60, 40, 130]);
         confetti();
         deck.classList.add('jackpot');
+        modalTag.textContent = '🎯 命運指定';
+        winnerText.style.fontSize = '';
         winnerText.textContent = loser;
-        winnerMeta.textContent = '開出 3/5 格最多!這攤換你請 💸';
+        winnerMeta.textContent = '開出 ' + max + '/5 格最多!這攤換你請 💸';
+        btnAgain.textContent = '再抽一次';
+        setTimeout(() => {
+            modal.style.display = 'flex';
+            spinBtn.classList.remove('spinning');
+            isSpinning = false;
+        }, 650);
+    }
+
+    function showTie(top, max) {
+        playSfx('ding');
+        vibrate([0, 40, 30, 40]);
+        modalTag.textContent = '⚡ 平手決賽';
+        winnerText.style.fontSize = '1.9rem';
+        winnerText.textContent = top.join('、');
+        winnerMeta.textContent = '都開出 ' + max + ' 格!只有你們進決勝輪 🔥';
+        btnAgain.textContent = '⚡ 啟動決勝輪';
         setTimeout(() => {
             modal.style.display = 'flex';
             spinBtn.classList.remove('spinning');
@@ -469,6 +510,7 @@ input[type=text]:disabled{opacity:.35}
 
     resetBtn.addEventListener('click', () => {
         if (isSpinning) return;
+        tiePool = null;
         localStorage.removeItem(K_NAMES);
         inputs.forEach(i => { i.value = ''; i.disabled = false; });
         deck.classList.remove('jackpot');
@@ -495,6 +537,7 @@ input[type=text]:disabled{opacity:.35}
 
     btnEdit.addEventListener('click', () => {
         modal.style.display = 'none';
+        tiePool = null;
         inputs.forEach(i => i.disabled = false);
         deck.classList.remove('jackpot');
         rails.forEach(r => { r.querySelectorAll('.lit').forEach(el => el.classList.remove('lit')); });
