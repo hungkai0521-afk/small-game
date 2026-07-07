@@ -183,7 +183,7 @@ input[type=text]:disabled{opacity:.35}
     <a class="back" href="index.html">← 遊樂場</a>
     <h1>命運拉霸 🎰</h1>
   </div>
-  <div class="sub">五軸連線 · 每人等機率 · 連到誰誰就請</div>
+  <div class="sub">五軸開獎 · 每人等機率 · 出現最多次的人請</div>
 
   <div class="deck" id="deck">
     <div class="slot-col"><div class="slot-rail" id="r-0"><div class="slot-item">?</div></div></div>
@@ -276,13 +276,21 @@ input[type=text]:disabled{opacity:.35}
     }
 
     // crypto 無偏取樣
-    function pick(arr) {
-        const n = arr.length;
+    function randInt(min, max) { // [min, max] 含端點
+        const n = max - min + 1;
         const buf = new Uint32Array(1);
         const limit = Math.floor(0xFFFFFFFF / n) * n;
         let x;
         do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
-        return arr[x % n];
+        return min + (x % n);
+    }
+    function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+    function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = randInt(0, i);
+            const t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
     }
 
     function vibrate(p) { if (!reduceMotion && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
@@ -357,18 +365,22 @@ input[type=text]:disabled{opacity:.35}
         })();
     }
 
-    function animateReel(rail, idx, loser, pool) {
+    function animateReel(rail, idx, face, isLoser, pool) {
         return new Promise(resolve => {
             const N = 24;
             let html = '';
             for (let i = 0; i < N; i++) html += '<div class="slot-item">' + safe(pick(pool)) + '</div>';
-            html += '<div class="slot-item final">' + safe(loser) + '</div>';
+            html += '<div class="slot-item final">' + safe(face) + '</div>';
 
             rail.style.transition = 'none';
             rail.style.transform = 'translateY(0)';
             rail.innerHTML = html;
 
-            requestAnimationFrame(() => requestAnimationFrame(() => {
+            // rAF 啟動,120ms timeout 後備(背景分頁 rAF 可能不觸發)
+            let started = false;
+            const kick = () => {
+                if (started) return;
+                started = true;
                 const dur = reduceMotion ? 0.4 : (2.0 + idx * 0.35);
                 let ticker = null;
                 if (!reduceMotion) {
@@ -379,10 +391,12 @@ input[type=text]:disabled{opacity:.35}
                 setTimeout(() => {
                     if (ticker) clearInterval(ticker);
                     playSfx('ding'); vibrate(28);
-                    if (rail.lastElementChild) rail.lastElementChild.classList.add('lit');
+                    if (isLoser && rail.lastElementChild) rail.lastElementChild.classList.add('lit');
                     resolve();
                 }, dur * 1000);
-            }));
+            };
+            requestAnimationFrame(() => requestAnimationFrame(kick));
+            setTimeout(kick, 120);
         });
     }
 
@@ -409,7 +423,15 @@ input[type=text]:disabled{opacity:.35}
         deck.classList.remove('jackpot');
         modal.style.display = 'none';
 
-        await Promise.all(rails.map((rail, idx) => animateReel(rail, idx, loser, uniq)));
+        // 開獎面:苦主佔 3 格 + 2 個路人,前四軸洗牌、最後一軸(最晚停)必為苦主決勝
+        const others = uniq.filter(n => n !== loser);
+        let d1 = pick(others), d2 = d1;
+        if (others.length > 1) d2 = pick(others.filter(n => n !== d1));
+        const faces = shuffle([loser, loser, d1, d2]);
+        faces.push(loser);
+
+        await Promise.all(rails.map((rail, idx) =>
+            animateReel(rail, idx, faces[idx], faces[idx] === loser, uniq)));
 
         lastLoser = loser;
         pushHistory(loser);
@@ -422,7 +444,7 @@ input[type=text]:disabled{opacity:.35}
         confetti();
         deck.classList.add('jackpot');
         winnerText.textContent = loser;
-        winnerMeta.textContent = '五軸連線!這攤換你請 💸';
+        winnerMeta.textContent = '開出 3/5 格最多!這攤換你請 💸';
         setTimeout(() => {
             modal.style.display = 'flex';
             spinBtn.classList.remove('spinning');
